@@ -1,0 +1,71 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# ===== Virtual Environments =====
+venv/
+env/
+.venv/
+ENV/
+.python-version
+
+# ===== Streamlit =====
+# NEVER commit secrets.toml — it holds API keys
+.streamlit/secrets.toml
+# Streamlit cache
+.streamlit/cache/
+
+# ===== Environment Variables / Secrets =====
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ===== IDE / Editors =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Build / Distribution =====
+build/
+dist/
+*.egg-info/
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===== Testing / Coverage =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ===== Jupyter / Notebooks =====
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===== Logs & Local Data =====
+*.log
+logs/
+*.sqlite
+*.sqlite3
+*.db
+
+# ===== Project-specific (uncomment as needed) =====
+# data/
+# models/
+# *.csv
+# *.pkl

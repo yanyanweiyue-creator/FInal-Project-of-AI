@@ -1,156 +1,225 @@
+# AI Study Note Helper App
+# This app is designed for students who want to turn messy or unorganized study notes into structured learning materials.
+# Users can input notes by typing directly or uploading a PDF/TXT file containing their notes.
+# The app uses an AI model to generate:
+# 1. Key Points — a clear list of important ideas from the notes
+# 2. Quiz Questions — either MCQ (with answers and explanations) or FRQ (with sample answers and rubric)
+# The generated results are displayed in the app, and users can interact with the quiz and check their answers.
+# Expected input: raw study notes from any subject (e.g., AP classes, lecture notes, textbook summaries).
+
+
 import streamlit as st
 from PIL import Image
 from openai import OpenAI
 import json
+import st_yeld
 import PyPDF2
 
-st.set_page_config(
-    page_title="AI Study Note Helper",
-    page_icon="📘",
-    layout="wide"
-)
+# I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
+import os
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="wide")
 
-st.markdown(
-    "<h1 style='color:#4B0082;'>AI Study Note Helper</h1>",
-    unsafe_allow_html=True
-)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
 
-st.write(
-    "Upload or type your messy notes. This app will turn them into a summary, key points, and quiz questions."
-)
+st.markdown("<h1 style='color:#4B0082;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
+st.write("Paste notes or upload a file. The app will turn them into key points or quiz.")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-    notes = st.text_area(
-        "Paste your notes here:",
-        height=280,
-        placeholder="Paste class notes, textbook notes, or review materials here..."
-    )
+    notes = st.text_area("Your notes:", height=280)
 
 with col2:
-    uploaded_doc = st.file_uploader(
-        "Upload document (PDF/TXT)",
-        type=["pdf", "txt"]
-    )
+    file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
+    img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
 
-    uploaded_image = st.file_uploader(
-        "Upload image (optional preview only)",
-        type=["png", "jpg", "jpeg"]
-    )
+    if img:
+        st.image(Image.open(img), use_container_width=True)
 
-    if uploaded_image:
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Uploaded Image Preview", use_container_width=True)
-        st.info("Image preview is supported, but OCR is not included in this version.")
+task = st.radio(
+    "What do you want to generate?",
+    ["Key Points", "Quiz"]
+)
 
-generate = st.button("Generate Study Materials")
+if task == "Key Points":
+    point_num = st.number_input("Number of Key Points", 1, 10, 5)
+    generate_button = st.button("Generate Key Points")
 
-if generate:
-    final_notes = ""
+else:
+    quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"])
+    quiz_num = st.number_input("Number of questions", 1, 10, 3)
+    generate_button = st.button("Generate Quiz")
 
-    if notes.strip():
-        final_notes = notes.strip()
+text = ""
 
-    elif uploaded_doc is not None:
-        if uploaded_doc.type == "text/plain":
-            final_notes = uploaded_doc.read().decode("utf-8")
+# From AI since I do not know how to read file in streamlit, so I just put it here. You can ignore it.
+if notes.strip():
+    text = notes
+elif file:
+    if file.type == "text/plain":
+        text = file.read().decode("utf-8")
 
-        elif uploaded_doc.type == "application/pdf":
-            pdf_reader = PyPDF2.PdfReader(uploaded_doc)
-            text = ""
+    elif file.type == "application/pdf":
+        reader = PyPDF2.PdfReader(file)
+        for p in reader.pages:
+            text += p.extract_text() or ""
 
-            for page in pdf_reader.pages:
-                text += page.extract_text() or ""
 
-            final_notes = text.strip()
+if generate_button:
+    if not text:
+        st.warning("Please add some notes first.")
 
     else:
-        st.warning("Please paste notes or upload a PDF/TXT document.")
-        st.stop()
+        if task == "Key Points":
+            system_prompt = f"""
+            You are a study assistant.
+            Only use given notes.
+            Return JSON only.
 
-    if len(final_notes) < 30:
-        st.warning("Please provide more detailed notes before generating study materials.")
-        st.stop()
+            Format:
+            {{
+              "Key Points": ["...", "...", "..."]
+            }}
 
-    system_prompt = """
-You are an AI study assistant designed specifically for high school students.
+            Rule:
+            The total number of key points must be exactly {point_num}.
+            """
 
-Only use the information provided by the user.
-Do not add outside information.
-Make the explanation easy to understand.
-Return ONLY valid JSON.
+        else:
+            system_prompt = f"""
+            You are a study assistant.
+            Only use given notes.
+            Return JSON only.
 
-The JSON must follow this exact format:
-{
-  "Summary": "...",
-  "Key Points": ["...", "..."],
-  "Quiz": [
-    {
-      "Question": "...",
-      "Choices": ["A. ...", "B. ...", "C. ...", "D. ..."],
-      "Answer": "A",
-      "Explanation": "..."
-    }
-  ]
-}
+            Quiz type: {quiz_type}
+            Number of questions: {quiz_num}
 
-Rules:
-- Summary should be short and clear.
-- Key Points should depend on note length.
-- Short notes should have 3-6 key points.
-- Long notes should have 7-9 key points.
-- Generate 3-5 multiple-choice questions.
-- Each quiz question must have exactly 4 choices.
-"""
+            If MCQ, return:
+            {{
+              "Quiz": [
+                {{
+                  "Question": "...",
+                  "Choices": ["A. ...", "B. ...", "C. ...", "D. ..."],
+                  "Answer": "A",
+                  "Explanation": "..."
+                }}
+              ]
+            }}
 
-    user_prompt = f"""
-Here are my notes:
+            If FRQ, return:
+            {{
+              "Quiz": [
+                {{
+                  "Question": "...",
+                  "Sample Answer": "...",
+                  "Rubric": ["...", "...", "..."]
+                }}
+              ]
+            }}
 
-{final_notes}
+            Make exactly {quiz_num} questions.
+            """
 
-Turn them into structured study materials.
-"""
+        user_prompt = f"Notes: {text}"
 
-    with st.spinner("Generating study materials..."):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            response_format={"type": "json_object"},
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ]
-        )
+        with st.spinner("Generating..."):
+            res = client.chat.completions.create(
+                model="gpt-4o-mini",
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
 
-    result_text = response.choices[0].message.content
+        mamba = res.choices[0].message.content
 
-    try:
-        result = json.loads(result_text)
+        try:
+            data = json.loads(mamba)
 
-        st.success("Study materials generated!")
+            if task == "Key Points":
+                st.session_state["key_points_data"] = data
+                st.session_state["quiz_data"] = None
 
-        st.subheader("Summary")
-        st.write(result.get("Summary", "No summary generated."))
+            else:
+                st.session_state["quiz_data"] = data
+                st.session_state["quiz_type"] = quiz_type
+                st.session_state["key_points_data"] = None
 
-        st.subheader("Key Points")
-        for i, point in enumerate(result.get("Key Points", []), start=1):
-            st.write(f"{i}. {point}")
+        except:
+            st.error("Error reading response")
+            st.write(mamba)
 
-        st.subheader("Quiz")
-        for i, q in enumerate(result.get("Quiz", []), start=1):
-            st.markdown(f"**Question {i}: {q.get('Question', '')}**")
 
-            for choice in q.get("Choices", []):
-                st.write(choice)
+if st.session_state.get("key_points_data"):
+    data = st.session_state["key_points_data"]
 
-            st.write(f"**Answer:** {q.get('Answer', '')}")
-            st.write(f"**Explanation:** {q.get('Explanation', '')}")
+    st.subheader("Key Points")
+
+    for i, p in enumerate(data.get("Key Points", []), 1):
+        st.write(f"{i}. {p}")
+
+
+if st.session_state.get("quiz_data"):
+    data = st.session_state["quiz_data"]
+    saved_quiz_type = st.session_state.get("quiz_type", "MCQ")
+
+    st.subheader("Quiz")
+
+    if saved_quiz_type == "MCQ":
+        for i, q in enumerate(data.get("Quiz", []), 1):
+            st.markdown(f"**Q{i}: {q.get('Question', '')}**")
+
+            for c in q.get("Choices", []):
+                st.write(c)
+
+            st.radio(
+                "Choose:",
+                ["A", "B", "C", "D"],
+                key=f"ans_{i}"
+            )
+
             st.divider()
 
-    except json.JSONDecodeError:
-        st.error("The AI response was not valid JSON.")
-        st.write(result_text)
+        if st.button("Check"):
+            score = 0
+            total = len(data.get("Quiz", []))
+    
+            for i, q in enumerate(data.get("Quiz", []), 1):
+                user = st.session_state.get(f"ans_{i}", "")
+                correct = q.get("Answer", "")
+
+                if user == correct:
+                    st.success(f"Q{i}: Correct")
+                    score += 1
+                else:
+                    st.error(f"Q{i}: Wrong. Correct answer: {correct}")
+
+                st.write("Explanation:", q.get("Explanation", ""))
+
+            st.subheader(f"Score: {score}/{total}")
+
+    else:
+        for i, q in enumerate(data.get("Quiz", []), 1):
+            st.markdown(f"**Q{i}: {q.get('Question', '')}**")
+
+            st.text_area(
+                "Your answer:",
+                key=f"frq_{i}"
+            )
+
+            st.divider()
+
+        if st.button("Check"):
+            for i, q in enumerate(data.get("Quiz", []), 1):
+                st.markdown(f"Q{i} Sample Answer:")
+                st.write(q.get("Sample Answer", ""))
+
+                st.write("Rubric:")
+                for r in q.get("Rubric", []):
+                    st.write("-", r)
+
+                st.divider()
