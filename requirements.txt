@@ -1,3 +1,5 @@
 streamlit
 openai
 st-styled
+PyPDF2
+PIL
