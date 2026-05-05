@@ -12,7 +12,7 @@ import streamlit as st
 from PIL import Image
 from openai import OpenAI
 import json
-import st_yeld
+import st_yled
 import PyPDF2
 
 # I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
@@ -23,35 +23,35 @@ st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY")) 
 
 st.markdown("<h1 style='color:#4B0082;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
-st.write("Paste notes or upload a file. The app will turn them into key points or quiz.")
+st_yled.text("Paste notes or upload a file. The app will turn them into key points or quiz.")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-    notes = st.text_area("Your notes:", height=280)
+    notes = st_yled.text_area("Your notes:", height=280)
 
 with col2:
-    file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
-    img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
+    file = st_yled.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
+    img = st_yled.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
 
     if img:
         st.image(Image.open(img), use_container_width=True)
 
-task = st.radio(
+task = st_yled.radio(
     "What do you want to generate?",
     ["Key Points", "Quiz"]
 )
 
 if task == "Key Points":
-    point_num = st.number_input("Number of Key Points", 1, 10, 5)
-    generate_button = st.button("Generate Key Points")
+    point_num = st_yled.number_input("Number of Key Points", 1, 10, 5)
+    generate_button = st_yled.button("Generate Key Points")
 
 else:
-    quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"])
-    quiz_num = st.number_input("Number of questions", 1, 10, 3)
-    generate_button = st.button("Generate Quiz")
+    quiz_type = st_yled.radio("Quiz Type", ["MCQ", "FRQ"])
+    quiz_num = st_yled.number_input("Number of questions", 1, 10, 3)
+    generate_button = st_yled.button("Generate Quiz")
 
 text = ""
 
@@ -70,7 +70,7 @@ elif file:
 
 if generate_button:
     if not text:
-        st.warning("Please add some notes first.")
+        st_yled.warning("Please add some notes first.")
 
     else:
         if task == "Key Points":
@@ -125,7 +125,7 @@ if generate_button:
 
         user_prompt = f"Notes: {text}"
 
-        with st.spinner("Generating..."):
+        with st_yled.spinner("Generating..."):
             res = client.chat.completions.create(
                 model="gpt-4o-mini",
                 response_format={"type": "json_object"},
@@ -141,31 +141,31 @@ if generate_button:
             data = json.loads(mamba)
 
             if task == "Key Points":
-                st.session_state["key_points_data"] = data
-                st.session_state["quiz_data"] = None
+                st_yled.session_state["key_points_data"] = data
+                st_yled.session_state["quiz_data"] = None
 
             else:
-                st.session_state["quiz_data"] = data
-                st.session_state["quiz_type"] = quiz_type
-                st.session_state["key_points_data"] = None
+                st_yled.session_state["quiz_data"] = data
+                st_yled.session_state["quiz_type"] = quiz_type
+                st_yled.session_state["key_points_data"] = None
 
         except:
-            st.error("Error reading response")
-            st.write(mamba)
+            st_yled.error("Error reading response")
+            st_yled.text(mamba)
 
 
-if st.session_state.get("key_points_data"):
-    data = st.session_state["key_points_data"]
+if st_yled.session_state.get("key_points_data"):
+    data = st_yled.session_state["key_points_data"]
 
     st.subheader("Key Points")
 
     for i, p in enumerate(data.get("Key Points", []), 1):
-        st.write(f"{i}. {p}")
+        st_yled.text(f"{i}. {p}")
 
 
-if st.session_state.get("quiz_data"):
-    data = st.session_state["quiz_data"]
-    saved_quiz_type = st.session_state.get("quiz_type", "MCQ")
+if st_yled.session_state.get("quiz_data"):
+    data = st_yled.session_state["quiz_data"]
+    saved_quiz_type = st_yled.session_state.get("quiz_type", "MCQ")
 
     st.subheader("Quiz")
 
@@ -174,9 +174,9 @@ if st.session_state.get("quiz_data"):
             st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
             for c in q.get("Choices", []):
-                st.write(c)
+                st_yled.text(c)
 
-            st.radio(
+            st_yled.radio(
                 "Choose:",
                 ["A", "B", "C", "D"],
                 key=f"ans_{i}"
@@ -184,21 +184,21 @@ if st.session_state.get("quiz_data"):
 
             st.divider()
 
-        if st.button("Check"):
+        if st_yled.button("Check"):
             score = 0
             total = len(data.get("Quiz", []))
     
             for i, q in enumerate(data.get("Quiz", []), 1):
-                user = st.session_state.get(f"ans_{i}", "")
+                user = st_yled.session_state.get(f"ans_{i}", "")
                 correct = q.get("Answer", "")
 
                 if user == correct:
-                    st.success(f"Q{i}: Correct")
+                    st_yled.success(f"Q{i}: Correct")
                     score += 1
                 else:
-                    st.error(f"Q{i}: Wrong. Correct answer: {correct}")
+                    st_yled.error(f"Q{i}: Wrong. Correct answer: {correct}")
 
-                st.write("Explanation:", q.get("Explanation", ""))
+                st_yled.text("Explanation:", q.get("Explanation", ""))
 
             st.subheader(f"Score: {score}/{total}")
 
@@ -206,20 +206,20 @@ if st.session_state.get("quiz_data"):
         for i, q in enumerate(data.get("Quiz", []), 1):
             st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
-            st.text_area(
+            st_yled.text_area(
                 "Your answer:",
                 key=f"frq_{i}"
             )
 
-            st.divider()
+            st_yled.divider()
 
-        if st.button("Check"):
+        if st_yled.button("Check"):
             for i, q in enumerate(data.get("Quiz", []), 1):
                 st.markdown(f"Q{i} Sample Answer:")
-                st.write(q.get("Sample Answer", ""))
+                st_yled.text(q.get("Sample Answer", ""))
 
-                st.write("Rubric:")
+                st_yled.text("Rubric:")
                 for r in q.get("Rubric", []):
-                    st.write("-", r)
+                    st_yled.text("-", r)
 
                 st.divider()
