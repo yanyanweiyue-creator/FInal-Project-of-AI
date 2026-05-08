@@ -39,10 +39,7 @@ if st.session_state["page"] == "home":
 
 
    col1, col2 = st.columns(2)
-   with st.container(
-       background_color="#121212",
-       padding=20,
-   ):
+   with st.container():
        with col1:
            notes = st.text_area("Your notes:", height=210)
 
