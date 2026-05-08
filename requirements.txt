@@ -1,6 +1,6 @@
 streamlit
 openai
 PyPDF2
-PIL
+pillow
 turtle 
 io
