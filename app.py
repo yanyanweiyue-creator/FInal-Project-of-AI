@@ -14,28 +14,20 @@ import streamlit as st
 from PIL import Image
 from openai import OpenAI
 import json
-import st_yled
 import PyPDF2
-
-
-
-
 
 
 # I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
 
-
 st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="wide")
 
-
-st_yled.init()
 
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 
 st.markdown("<h1 style='color:#4B0082;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
-st_yled.text("Paste notes or upload a file. The app will turn them into key points or quiz.")
+st.text("Paste notes or upload a file. The app will turn them into key points or quiz.")
 if "page" not in st.session_state:
    st.session_state["page"] = "home"
 st.divider()
@@ -47,38 +39,38 @@ if st.session_state["page"] == "home":
 
 
    col1, col2 = st.columns(2)
-   with st_yled.container(
+   with st.container(
        background_color="#121212",
        padding=20,
    ):
        with col1:
-           notes = st_yled.text_area("Your notes:", height=210)
+           notes = st.text_area("Your notes:", height=210)
 
 
        with col2:
-           file = st_yled.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
-           img = st_yled.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
+           file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
+           img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
 
 
            if img:
                st.image(Image.open(img), use_container_width=True)
 
 
-   task = st_yled.radio(
+   task = st.radio(
        "What do you want to generate?",
        ["Key Points", "Quiz"]
    )
 
 
    if task == "Key Points":
-       point_num = st_yled.number_input("Number of Key Points", 1, 10, 5)
-       generate_button = st_yled.button("Generate Key Points")
+       point_num = st.number_input("Number of Key Points", 1, 10, 5)
+       generate_button = st.button("Generate Key Points")
 
 
    else:
-       quiz_type = st_yled.radio("Quiz Type", ["MCQ", "FRQ"])
-       quiz_num = st_yled.number_input("Number of questions", 1, 10, 3)
-       generate_button = st_yled.button("Generate Quiz")
+       quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"])
+       quiz_num = st.number_input("Number of questions", 1, 10, 3)
+       generate_button = st.button("Generate Quiz")
 
 
    text = ""
@@ -103,7 +95,7 @@ if st.session_state["page"] == "home":
    if generate_button:
       
        if not text:
-           st_yled.warning("Please add some notes first.")
+           st.warning("Please add some notes first.")
 
 
        else:
@@ -168,7 +160,7 @@ if st.session_state["page"] == "home":
            user_prompt = f"Notes: {text}"
 
 
-           with st_yled.spinner("Generating..."):
+           with st.spinner("Generating..."):
                res = client.chat.completions.create(
                    model="gpt-4o-mini",
                    response_format={"type": "json_object"},
@@ -187,8 +179,8 @@ if st.session_state["page"] == "home":
 
 
            except:
-               st_yled.error("Error reading response")
-               st_yled.text(mamba)
+               st.error("Error reading response")
+               st.text(mamba)
 
 
            else:
@@ -230,7 +222,7 @@ if st.session_state["page"] == "output":
 
 
            for i, p in enumerate(data.get("Key Points", []), 1):
-               st_yled.text(f"{i}. {p}")
+               st.text(f"{i}. {p}")
 
 
 
@@ -249,10 +241,10 @@ if st.session_state["page"] == "output":
 
 
                    for c in q.get("Choices", []):
-                       st_yled.text(c)
+                       st.text(c)
 
 
-                   st_yled.radio(
+                   st.radio(
                        "Choose:",
                        ["A", "B", "C", "D"],
                        key=f"ans_{i}"
@@ -262,7 +254,7 @@ if st.session_state["page"] == "output":
                    st.divider()
 
 
-               if st_yled.button("Check"):
+               if st.button("Check"):
                    score = 0
                    total = len(data.get("Quiz", []))
           
@@ -272,13 +264,13 @@ if st.session_state["page"] == "output":
 
 
                        if user == correct:
-                           st_yled.success(f"Q{i}: Correct")
+                           st.success(f"Q{i}: Correct")
                            score += 1
                        else:
-                           st_yled.error(f"Q{i}: Wrong. Correct answer: {correct}")
+                           st.error(f"Q{i}: Wrong. Correct answer: {correct}")
 
 
-                       st_yled.text(f"Explanation: {q.get('Explanation', '')}")
+                       st.text(f"Explanation: {q.get('Explanation', '')}")
 
 
                    st.subheader(f"Score: {score}/{total}")
@@ -289,28 +281,28 @@ if st.session_state["page"] == "output":
                    st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
 
-                   st_yled.text_area(
+                   st.text_area(
                        "Your answer:",
                        key=f"frq_{i}"
                    )
 
 
-                   st_yled.divider()
+                   st.divider()
 
 
-               if st_yled.button("Check"):
+               if st.button("Check"):
                    for i, q in enumerate(data.get("Quiz", []), 1):
                        st.markdown(f"Q{i} Sample Answer:")
-                       st_yled.text(q.get("Sample Answer", ""))
+                       st.text(q.get("Sample Answer", ""))
 
 
-                       st_yled.text("Rubric:")
+                       st.text("Rubric:")
                        for r in q.get("Rubric", []):
-                           st_yled.text(f"- {r}")
+                           st.text(f"- {r}")
 
 
                        st.divider()
   
-   if st_yled.button("Back"):
+   if st.button("Back"):
        st.session_state["page"] = "home"
        st.rerun()

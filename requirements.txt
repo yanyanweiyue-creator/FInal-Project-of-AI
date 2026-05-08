@@ -4,4 +4,3 @@ PyPDF2
 PIL
 turtle 
 io
-st-styled
