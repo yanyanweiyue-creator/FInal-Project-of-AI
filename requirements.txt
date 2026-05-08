@@ -1,5 +1,7 @@
 streamlit
 openai
-st-styled
+st-yled
 PyPDF2
 PIL
+turtle 
+io
