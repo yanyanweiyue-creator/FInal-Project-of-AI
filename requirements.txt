@@ -2,5 +2,4 @@ streamlit
 openai
 PyPDF2
 pillow
-turtle 
-io
+
