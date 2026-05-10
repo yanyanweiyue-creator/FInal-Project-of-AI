@@ -41,12 +41,12 @@ if st.session_state["page"] == "home":
    col1, col2 = st.columns(2)
    with st.container():
        with col1:
-           notes = st.text_area("Your notes:", height=210)
+           notes = st.text_area("Your notes:", height=210, key="notes_input")
 
 
        with col2:
-           file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"])
-           img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"])
+           file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"],key="file_input")
+           img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"],key="img_input")
 
 
            if img:
@@ -55,19 +55,20 @@ if st.session_state["page"] == "home":
 
    task = st.radio(
        "What do you want to generate?",
-       ["Key Points", "Quiz"]
+       ["Key Points", "Quiz"],
+       key="task_input"
    )
 
 
    if task == "Key Points":
-       point_num = st.number_input("Number of Key Points", 1, 10, 5)
+       point_num = st.number_input("Number of Key Points", 1, 10, 5, key="point_num_input")
        generate_button = st.button("Generate Key Points")
 
 
    else:
-       quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"])
-       quiz_num = st.number_input("Number of questions", 1, 10, 3)
-       generate_button = st.button("Generate Quiz")
+       quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"], key="quiz_type_input")
+       quiz_num = st.number_input("Number of questions", 1, 10, 3, key="quiz_num_input")
+       generate_button = st.button("Generate Quiz") 
 
 
    text = ""
