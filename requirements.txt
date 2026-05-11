@@ -3,4 +3,3 @@ openai
 PyPDF2
 pillow
 st-styled
-

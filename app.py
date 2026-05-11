@@ -17,6 +17,7 @@ import json
 import PyPDF2
 
 
+
 # I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
 
 st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="wide")
@@ -28,290 +29,284 @@ client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 st.markdown("<h1 style='color:#4B0082;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
 st.text("Paste notes or upload a file. The app will turn them into key points or quiz.")
-if "page" not in st.session_state:
-   st.session_state["page"] = "home"
+
 st.divider()
 
 
-if st.session_state["page"] == "home":
 
 
 
 
-   col1, col2 = st.columns(2)
-   with st.container():
-       with col1:
-           notes = st.text_area("Your notes:", height=210, key="notes_input")
-           st.session_state["notes"] = notes
+col1, col2 = st.columns(2)
+with st.container():
+    with col1:
+        notes = st.text_area("Your notes:", height=210, key="notes_input")
+        st.session_state["notes"] = notes
 
 
-       with col2:
-           file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"],key="file_input")
-           if file is not None:
-                st.session_state["saved_file_name"] = file.name
-                st.session_state["saved_file_type"] = file.type
-                st.session_state["saved_file_bytes"] = file.getvalue()
+    with col2:
+        file = st.file_uploader("Upload PDF/TXT", type=["pdf", "txt"],key="file_input")
+        
+        if file is not None:
+            st.session_state["saved_file_name"] = file.name
+            st.session_state["saved_file_type"] = file.type
+            st.session_state["saved_file_bytes"] = file.getvalue()
 
-           img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"],key="img_input")
+        img = st.file_uploader("Image (preview only)", type=["png", "jpg", "jpeg"],key="img_input")
 
 
-           if img:
-               st.image(Image.open(img), use_container_width=True)
-               st.session_state["saved_img_name"] = img.name
-               st.session_state["saved_img_getvalue"] = img.getvalue()
+        if img:
+            st.image(Image.open(img), use_container_width=True)
+        elif img is not None:
+            st.session_state["saved_img_name"] = img.name
+            st.session_state["saved_img_getvalue"] = img.getvalue()
+            
 
 
-   task = st.radio(
-       "What do you want to generate?",
-       ["Key Points", "Quiz"],
-       key="task_input"
-   )
+task = st.radio(
+    "What do you want to generate?",
+    ["Key Points", "Quiz"],
+    key="task_input"
+)
 
 
-   if task == "Key Points":
-       point_num = st.number_input("Number of Key Points", 1, 10, 5, key="point_num_input")
-       st.session_state["point_num"] = point_num
-       generate_button = st.button("Generate Key Points")
+if task == "Key Points":
+    point_num = st.number_input("Number of Key Points", 1, 10, 5, key="point_num_input")
+    st.session_state["point_num"] = point_num
+    generate_button = st.button("Generate Key Points")
 
 
-   else:
-       quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"], key="quiz_type_input")
-       quiz_num = st.number_input("Number of questions", 1, 10, 3, key="quiz_num_input")
-       st.session_state["quiz_type"] = quiz_type
-       st.session_state["quiz_num"] = quiz_num
-       generate_button = st.button("Generate Quiz") 
+else:
+    quiz_type = st.radio("Quiz Type", ["MCQ", "FRQ"], key="quiz_type_input")
+    quiz_num = st.number_input("Number of questions", 1, 10, 3, key="quiz_num_input")
+    st.session_state["quiz_type"] = quiz_type
+    st.session_state["quiz_num"] = quiz_num
+    generate_button = st.button("Generate Quiz") 
 
 
-   text = ""
+text = ""
 
 
-   # From AI since I do not know how to let AI read file in streamlit, so I just put it here.
-   if notes.strip():
-       text = notes
-   elif file:
-       if file.type == "text/plain":
-           text = file.read().decode("utf-8")
+# From AI since I do not know how to let AI read file in streamlit, so I just put it here.
+if notes.strip():
+    text = notes
+elif file:
+    if file.type == "text/plain":
+        text = file.read().decode("utf-8")
 
 
-       elif file.type == "application/pdf":
-           reader = PyPDF2.PdfReader(file)
-           for p in reader.pages:
-               text += p.extract_text() or ""
+    elif file.type == "application/pdf":
+        reader = PyPDF2.PdfReader(file)
+        for p in reader.pages:
+            text += p.extract_text() or ""
 
 
 
 
-   if generate_button:
-      
-       if not text:
-           st.warning("Please add some notes first.")
+if generate_button:
+    
+    if not text:
+        st.warning("Please add some notes first.")
 
 
-       else:
-           if task == "Key Points":
-               system_prompt = f"""
-               You are a study assistant.
-               Only use given notes.
-               Return JSON only.
+    else:
+        if task == "Key Points":
+            system_prompt = f"""
+            You are a study assistant.
+            Only use given notes.
+            Return JSON only.
 
 
-               Format:
-               {{
-               "Key Points": ["...", "...", "..."]
-               }}
+            Format:
+            {{
+            "Key Points": ["...", "...", "..."]
+            }}
 
 
-               Rule:
-               The total number of key points must be exactly {point_num}.
-               """
+            Rule:
+            The total number of key points must be exactly {point_num}.
+            """
 
 
-           else:
-               system_prompt = f"""
-               You are a study assistant.
-               Only use given notes.
-               Return JSON only.
+        else:
+            system_prompt = f"""
+            You are a study assistant.
+            Only use given notes.
+            Return JSON only.
 
 
-               Quiz type: {quiz_type}
-               Number of questions: {quiz_num}
+            Quiz type: {quiz_type}
+            Number of questions: {quiz_num}
 
 
-               If MCQ, return:
-               {{
-               "Quiz": [
-                   {{
-                   "Question": "...",
-                   "Choices": ["A. ...", "B. ...", "C. ...", "D. ..."],
-                   "Answer": "A",
-                   "Explanation": "..."
-                   }}
-               ]
-               }}
+            If MCQ, return:
+            {{
+            "Quiz": [
+                {{
+                "Question": "...",
+                "Choices": ["A. ...", "B. ...", "C. ...", "D. ..."],
+                "Answer": "A",
+                "Explanation": "..."
+                }}
+            ]
+            }}
 
 
-               If FRQ, return:
-               {{
-               "Quiz": [
-                   {{
-                   "Question": "...",
-                   "Sample Answer": "...",
-                   "Rubric": ["...", "...", "..."]
-                   }}
-               ]
-               }}
+            If FRQ, return:
+            {{
+            "Quiz": [
+                {{
+                "Question": "...",
+                "Sample Answer": "...",
+                "Rubric": ["...", "...", "..."]
+                }}
+            ]
+            }}
 
 
-               Make exactly {quiz_num} questions.
-               """
+            Make exactly {quiz_num} questions.
+            """
 
 
-           user_prompt = f"Notes: {text}"
+        user_prompt = f"Notes: {text}"
 
 
-           with st.spinner("Generating..."):
-               res = client.chat.completions.create(
-                   model="gpt-4o-mini",
-                   response_format={"type": "json_object"},
-                   messages=[
-                       {"role": "system", "content": system_prompt},
-                       {"role": "user", "content": user_prompt}
-                   ]
-               )
+        with st.spinner("Generating..."):
+            res = client.chat.completions.create(
+                model="gpt-4o-mini",
+                response_format={"type": "json_object"},
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
 
 
-           mamba = res.choices[0].message.content
+        mamba = res.choices[0].message.content
 
 
-           try:
-               data = json.loads(mamba)
+        try:
+            data = json.loads(mamba)
 
 
-           except:
-               st.error("Error reading response")
-               st.text(mamba)
+        except:
+            st.error("Error reading response")
+            st.text(mamba)
 
 
-           else:
-               if task == "Key Points":
-                   st.session_state["key_points_data"] = data
-                   st.session_state["quiz_data"] = None
-               else:
-                   st.session_state["quiz_data"] = data
-                   st.session_state["quiz_type"] = quiz_type
-                   st.session_state["key_points_data"] = None
+        else:
+            if task == "Key Points":
+                st.session_state["key_points_data"] = data
+                st.session_state["quiz_data"] = None
+            else:
+                st.session_state["quiz_data"] = data
+                st.session_state["quiz_type"] = quiz_type
+                st.session_state["key_points_data"] = None
 
 
-               st.session_state["page"] = "output"
-               st.rerun()
 
 
 
+with st.container():
+    st.markdown(
+        """
+        <style>
+        .stContainer {
+            background-color: black;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    if st.session_state.get("key_points_data"):
+        data = st.session_state["key_points_data"]
 
-if st.session_state["page"] == "output":
-   with st.container():
-       st.markdown(
-           """
-           <style>
-           .stContainer {
-               background-color: black;
-           padding: 20px;
-           border-radius: 15px;
-           margin-bottom: 15px;
-           }
-           </style>
-           """,
-           unsafe_allow_html=True
-       )
-       if st.session_state.get("key_points_data"):
-           data = st.session_state["key_points_data"]
 
+        st.subheader("Key Points")
 
-           st.subheader("Key Points")
 
+        for i, p in enumerate(data.get("Key Points", []), 1):
+            st.text(f"{i}. {p}")
 
-           for i, p in enumerate(data.get("Key Points", []), 1):
-               st.text(f"{i}. {p}")
 
 
 
+    if st.session_state.get("quiz_data"):
+        data = st.session_state["quiz_data"]
+        saved_quiz_type = st.session_state.get("quiz_type", "MCQ")
 
-       if st.session_state.get("quiz_data"):
-           data = st.session_state["quiz_data"]
-           saved_quiz_type = st.session_state.get("quiz_type", "MCQ")
 
+        st.subheader("Quiz")
 
-           st.subheader("Quiz")
 
+        if saved_quiz_type == "MCQ":
+            for i, q in enumerate(data.get("Quiz", []), 1):
+                st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
-           if saved_quiz_type == "MCQ":
-               for i, q in enumerate(data.get("Quiz", []), 1):
-                   st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
+                for c in q.get("Choices", []):
+                    st.text(c)
 
-                   for c in q.get("Choices", []):
-                       st.text(c)
 
+                st.radio(
+                    "Choose:",
+                    ["A", "B", "C", "D"],
+                    key=f"ans_{i}"
+                )
 
-                   st.radio(
-                       "Choose:",
-                       ["A", "B", "C", "D"],
-                       key=f"ans_{i}"
-                   )
 
+                st.divider()
 
-                   st.divider()
 
+            if st.button("Check"):
+                score = 0
+                total = len(data.get("Quiz", []))
+        
+                for i, q in enumerate(data.get("Quiz", []), 1):
+                    user = st.session_state.get(f"ans_{i}", "")
+                    correct = q.get("Answer", "")
 
-               if st.button("Check"):
-                   score = 0
-                   total = len(data.get("Quiz", []))
-          
-                   for i, q in enumerate(data.get("Quiz", []), 1):
-                       user = st.session_state.get(f"ans_{i}", "")
-                       correct = q.get("Answer", "")
 
+                    if user == correct:
+                        st.success(f"Q{i}: Correct")
+                        score += 1
+                    else:
+                        st.error(f"Q{i}: Wrong. Correct answer: {correct}")
 
-                       if user == correct:
-                           st.success(f"Q{i}: Correct")
-                           score += 1
-                       else:
-                           st.error(f"Q{i}: Wrong. Correct answer: {correct}")
 
+                    st.text(f"Explanation: {q.get('Explanation', '')}")
 
-                       st.text(f"Explanation: {q.get('Explanation', '')}")
 
+                st.subheader(f"Score: {score}/{total}")
 
-                   st.subheader(f"Score: {score}/{total}")
 
+        else:
+            for i, q in enumerate(data.get("Quiz", []), 1):
+                st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
-           else:
-               for i, q in enumerate(data.get("Quiz", []), 1):
-                   st.markdown(f"**Q{i}: {q.get('Question', '')}**")
 
+                st.text_area(
+                    "Your answer:",
+                    key=f"frq_{i}"
+                )
 
-                   st.text_area(
-                       "Your answer:",
-                       key=f"frq_{i}"
-                   )
 
+                st.divider()
 
-                   st.divider()
 
+            if st.button("Check"):
+                for i, q in enumerate(data.get("Quiz", []), 1):
+                    st.markdown(f"Q{i} Sample Answer:")
+                    st.text(q.get("Sample Answer", ""))
 
-               if st.button("Check"):
-                   for i, q in enumerate(data.get("Quiz", []), 1):
-                       st.markdown(f"Q{i} Sample Answer:")
-                       st.text(q.get("Sample Answer", ""))
 
+                    st.text("Rubric:")
+                    for r in q.get("Rubric", []):
+                        st.text(f"- {r}")
 
-                       st.text("Rubric:")
-                       for r in q.get("Rubric", []):
-                           st.text(f"- {r}")
 
-
-                       st.divider()
+                    st.divider()
   
-   if st.button("Back"):
-       st.session_state["page"] = "home"
-       st.rerun()
