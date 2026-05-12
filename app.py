@@ -15,8 +15,9 @@ from PIL import Image
 from openai import OpenAI
 import json
 import PyPDF2
+import st_yled
 
-
+st_yled.init()
 
 # I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
 
