@@ -178,7 +178,7 @@ if generate_button:
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
-                    ]
+                    ],
                     timeout=5
                 )
 
