@@ -28,7 +28,7 @@ st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 
-st.markdown("<h1 style='color:#4B0082;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:#fffff;'>AI Study Note Helper</h1>", unsafe_allow_html=True)
 st.text("Paste notes or upload a file. The app will turn them into key points or quiz.")
 
 st.divider()
