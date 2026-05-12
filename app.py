@@ -170,19 +170,25 @@ if generate_button:
 
         user_prompt = f"Notes: {text}"
 
+        try:
+            with st.spinner("Generating..."):
+                res = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ]
+                )
 
-        with st.spinner("Generating..."):
-            res = client.chat.completions.create(
-                model="gpt-4o-mini",
-                response_format={"type": "json_object"},
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
-            )
 
+            mamba = res.choices[0].message.content
+        
 
-        mamba = res.choices[0].message.content
+        # get from AI
+        except Exception as e:
+            st.error(f"Error generating response: {e}")
+            mamba = None
 
 
         try:
