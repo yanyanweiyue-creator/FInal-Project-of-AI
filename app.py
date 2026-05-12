@@ -6,7 +6,7 @@
 # Quiz Questions — either MCQ (with answers and explanations) or FRQ (with sample answers and rubric)
 # The generated results are displayed in the app, and users can interact with the quiz and check their answers.
 # Expected input: raw study notes from any subject (e.g., AP classes, lecture notes, textbook summaries).
-
+# I choose not to make the code that to let Ai only rely the complete sentences, since lots of user they do not have a well-organized notes, they just have some key words or phrases, so I want to make the app more flexible and user-friendly. The AI will try its best to understand the meaning of the notes and generate key points or quiz based on that.
 
 
 
