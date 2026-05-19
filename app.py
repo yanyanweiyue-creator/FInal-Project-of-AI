@@ -180,7 +180,7 @@ if generate_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    timeout=20
+                    timeout=30
                 )
 
 
