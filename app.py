@@ -20,7 +20,7 @@ import st_yled
 st_yled.init()
 
 # I do not know why my API KEY cannot work when I use Client = OpenAi(api_key=st.secrets["OPENAI_API_KEY"]), so I ask AI to figuer out how to solve that.
-
+  
 st.set_page_config(page_title="AI Study Note Helper", page_icon="📘", layout="wide")
 
 
@@ -180,6 +180,8 @@ if generate_button:
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
+                    
+                    #Get code from AI
                     timeout=30
                 )
 
